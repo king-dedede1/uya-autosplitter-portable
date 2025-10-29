@@ -3,7 +3,7 @@
 
 typedef int subid_t;
 
-int ratchetron_connect(char *ip);
+int ratchetron_connect(const char *ip);
 void ratchetron_disconnect();
 subid_t ratchetron_listen(int game_addr, int size, void *local_addr);
 void ratchetron_release(subid_t id);

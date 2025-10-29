@@ -36,17 +36,19 @@ int split_route_len;
 
 int main(int argc, char* argv[])
 {
-    if (argc < 2)
+    if (argc < 3)
     {
-        printf("Missing arguments, expected 2. First is ip address, second is path to USR\n");
+        printf("Usage: autosplitter <IP> <split route>\n");
         return 1;
     }
 
+    printf("IP:  %s\nUSR: %s\n",argv[1],argv[2]);
+
     //printf("hello\n");
-    FILE *sr_file = fopen(argv[1], "r");
+    FILE *sr_file = fopen(argv[2], "r");
     if (sr_file == 0)
     {
-        printf("Couldn't open split route file: %s\n", strerror(errno));
+        printf("Error: couldn't open split route file: %s\n", strerror(errno));
         return 1;
     }
 
@@ -55,15 +57,17 @@ int main(int argc, char* argv[])
 
     if (livesplit_connect())
     {
-        printf("Failed to connect to LiveSplit server");
+        printf("Error: failed to connect to LiveSplit server\n");
         return 1;
     }
 
-    if (ratchetron_connect(argv[0]))
+    if (ratchetron_connect(argv[1]))
     {
-        printf("Failed to connect to game server");
+        printf("Error: failed to connect to ratchetron server\n");
         return 1;
     }
+
+    printf("Autosplitter starting!\n");
 
     ratchetron_listen(0xEE9314 + 3, 1, &current.destination);
     ratchetron_listen(0xC1E438 + 3, 1, &current.planet);
@@ -78,6 +82,8 @@ int main(int argc, char* argv[])
     ll_ignore[27] = true;
     ll_ignore[28] = true;
     ll_ignore[29] = true;
+
+    
 
     while (1)
     {
@@ -95,7 +101,7 @@ int main(int argc, char* argv[])
         if (current.loading_screen == 1 && old.loading_screen != 1
             && !ll_ignore[current.destination]
             && !ll_ignore[origin_planet])
-            livesplit_add_loading_time();
+            livesplit_add_loading_time(1);
 
         if (!biobliterator && current.game_state == 0 && current.planet == 20 
             && current.nefarious_phase % 2 == 1 && current.nefarious_health_bar == 1)
@@ -107,14 +113,24 @@ int main(int argc, char* argv[])
             livesplit_reset();
 
         if (current.planet == 1 && old.game_state == 6 && current.game_state == 0)
+        {
             livesplit_start();
+
+            // force livesplit to init game time
+            livesplit_add_loading_time(0);
+
+            entered_ldf = false;
+            biobliterator = false;
+        }
 
         else 
         {
             // ldf entry split
-            if (!entered_ldf && current.planet == 4
-                && current.chunk == 1 && old.chunk != 1)
+            if (!entered_ldf && current.planet == 4 && current.chunk == 1 && old.chunk != 1)
+            {
                 livesplit_split();
+                entered_ldf = true;
+            }
 
             // biobliterator split
             else if (current.nefarious_health_bar == 0 && biobliterator && current.planet == 20)
@@ -140,6 +156,7 @@ int main(int argc, char* argv[])
         
     }
 
+    // unreachable code :)
     ratchetron_disconnect();
     livesplit_disconnect();
 }

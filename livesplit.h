@@ -6,6 +6,6 @@ void livesplit_disconnect(void);
 void livesplit_start(void);
 void livesplit_split(void);
 void livesplit_reset(void);
-void livesplit_add_loading_time(void);
+void livesplit_add_loading_time(int seconds);
 
 #endif

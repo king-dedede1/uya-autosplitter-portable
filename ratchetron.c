@@ -36,23 +36,22 @@ int reverseByteOrder(int w)
     return k;
 }
 
-int ratchetron_connect(char *ip)
+int ratchetron_connect(const char *ip)
 {
     tcp_sock = socket(AF_INET, SOCK_STREAM, 0);
     if (tcp_sock == -1)
     {
-        printf("couldn't create tcp socket");
+        printf("Error: couldn't create TCP socket.");
         return 1;
     }
 
-    memset(&server_addr, 0, sizeof(server_addr));
     server_addr.sin_family = AF_INET;
     server_addr.sin_port = htons(RATCHETRON_PORT);
     server_addr.sin_addr.s_addr = inet_addr(ip);
 
     if (connect(tcp_sock, (struct sockaddr*)&server_addr, sizeof(server_addr)))
     {
-        printf("couldn't connect tcp socket");
+        printf("Error: couldn't connect TCP socket.");
         return 1;
     }
 
@@ -61,10 +60,10 @@ int ratchetron_connect(char *ip)
 
     if (connect_msg[0] != 1 || connect_msg[5] < 2)
     {
-        printf("server returned invalid welcome message");
+        printf("Error: server returned invalid connection message.");
         return 1;
     }
-    printf("Connected to server\n");
+    printf("Connected to server (%s)\n", ip);
 
     char enable_debug = 0xD;
     send(tcp_sock, &enable_debug, 1, 0);
@@ -85,11 +84,10 @@ int ratchetron_connect(char *ip)
     udp_sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if (udp_sock == -1)
     {
-        printf("couldnt create udp sock\n");
+        printf("Error: couldn't create UDP socket.\n");
         return 1;
     }
 
-    memset(&host_addr, 0, sizeof(host_addr));
     host_addr.sin_family = AF_INET;
     host_addr.sin_addr.s_addr = INADDR_ANY;
 
@@ -98,7 +96,7 @@ int ratchetron_connect(char *ip)
         host_addr.sin_port = htons(LOCAL_PORT);
         if (bind(udp_sock, (const struct sockaddr*)&host_addr, sizeof(host_addr)) < 0)
         {
-            printf("couldn't bind udp socket at port %d\n",LOCAL_PORT);
+            printf("Warning: tried to bind UDP socket at port %d and couldn't; trying again...\n",LOCAL_PORT);
         }
         else
         {
@@ -107,7 +105,6 @@ int ratchetron_connect(char *ip)
         }
 
     }
-
 
     char open_udp[5];
     open_udp[0] = 9;
@@ -120,7 +117,7 @@ int ratchetron_connect(char *ip)
 
     if (udp_return_code != 128)
     {
-        printf("bad udp return code (%d)\n", udp_return_code);
+        printf("Error: server error enabling UDP stream (%d)\n", udp_return_code);
         return 1;
     }
     return 0;
